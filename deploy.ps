@@ -1,0 +1,56 @@
+#!/bin/bash
+# Shell cript setup web AWS + Nginx + ReactJS
+#IP Server: 52.195.183.38
+
+# Update system
+sudo apt-get update
+
+# Install nodejs & npm
+curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install nginx
+sudo apt-get install nginx
+
+# Install create-react-app
+sudo npm install -g create-react-app
+
+# Create new Project ReactJS
+cd /home/ubuntu
+mkdir ReactDemo
+cd ReactDemo
+create-react-app my-react-app
+
+# Build
+npm run build
+
+# Add file config nginx
+sudo bash -c "cat > /etc/nginx/sites-available/react_app <<EOF
+server {
+    listen 80 default_server;
+    server_name 52.195.183.38;
+    root /home/ubuntu/ReactDemo/my-react-app/build;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html =404;
+    }
+}
+EOF"
+
+# Setting role folder build ReactJs
+sudo chown -R www-data:www-data /home/ubuntu/ReactDemo/my-react-app/build
+sudo chmod -R 755 /home/ubuntu/ReactDemo/my-react-app/build
+
+# Add permission nginx ( change from: user www-data;to user ubuntu www-data;
+# www-data ko the truy cap vao file nguoi dung nen can bo sung username cua nguoi dung hien tai la ubuntu
+sudo sed -i '/^user /c\user ubuntu www-data;' /etc/nginx/nginx.conf
+
+# Eneable file config
+sudo ln -s /etc/nginx/sites/availabele/react-app /etc/nginx/sites-enabled
+
+# Reload nginx:
+sudo nginx -s reload
+
+# Restart nginx:
+sudo systemctl restart nginx
